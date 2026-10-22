@@ -10,6 +10,7 @@ import {
   FaClock,
   FaFileAlt,
   FaFolderOpen,
+  FaLock,
   FaPlus,
   FaSync,
   FaUsers,
@@ -56,7 +57,14 @@ const DashboardArchives = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  const permissions = JSON.parse(localStorage.getItem('permissions') || '[]');
+  const canView = permissions.includes('archives.view');
+
   const load = async (silent = false) => {
+    if (!canView) {
+      setLoading(false);
+      return;
+    }
     silent ? setRefreshing(true) : setLoading(true);
     const results = await Promise.allSettled([
       api.get('/dashboard/statistics'),
@@ -76,9 +84,13 @@ const DashboardArchives = () => {
   };
 
   useEffect(() => {
+    if (!canView) {
+      setLoading(false);
+      return;
+    }
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [canView]);
 
   const utilisateur = JSON.parse(localStorage.getItem('utilisateur') || 'null') || {};
   const divisions = JSON.parse(localStorage.getItem('divisions') || '[]');
@@ -97,6 +109,44 @@ const DashboardArchives = () => {
 
   const maxClassement = Math.max(...(stats.top_classificateurs || []).map((item) => Number(item.total || 0)), 1);
   const maxDirection = Math.max(...(stats.top_directions || []).map((item) => Number(item.total || 0)), 1);
+
+  if (!canView) {
+    return (
+      <div className="min-h-screen bg-[#f4f6fb]">
+        <Menus />
+        <Head />
+        <div className="lg:pl-64">
+          <div className="mx-auto flex min-h-[80vh] max-w-3xl items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
+            <div className="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+              <div className="flex h-1">
+                <span className="w-24 bg-navy-900" />
+                <span className="w-10 bg-gold-400" />
+                <span className="flex-1 bg-slate-200" />
+              </div>
+              <div className="px-8 py-12 text-center">
+                <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 ring-1 ring-rose-100">
+                  <FaLock size={24} />
+                </span>
+                <p className="mt-4 font-mono text-[9px] font-bold uppercase tracking-[0.22em] text-gold-600">
+                  DGRAD · Contrôle d'accès
+                </p>
+                <h1 className="mt-2 font-serif text-2xl font-semibold text-navy-900">
+                  Accès non autorisé
+                </h1>
+                <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-500">
+                  Vous n'avez pas la permission de consulter le tableau de bord de l'archivage ordinaire.
+                  Contactez l'administrateur pour obtenir le droit <span className="font-semibold text-slate-700">archives.view</span>.
+                </p>
+                <Link to="/dashboard" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-navy-900 px-5 py-2.5 text-xs font-bold text-white transition hover:bg-navy-800">
+                  Retour au tableau de bord
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f4f6fb]">

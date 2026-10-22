@@ -41,10 +41,22 @@ Configurer `VITE_API_URL` dans les fichiers `.env` du frontend selon l'environne
 
 ### Service OCR
 
+Le backend utilise par défaut le service OCR local sur `http://127.0.0.1:5000`.
+
 ```bash
 cd ocr
 pip install -r requirements.txt
 python app.py
+```
+
+Sous Windows, vous pouvez aussi double-cliquer sur `ocr/start_ocr.bat`.
+
+Variables backend correspondantes :
+
+```env
+FLASK_OCR_URL=http://127.0.0.1:5000/api/ocr
+FLASK_OCR_BATCH_URL=http://127.0.0.1:5000/api/ocr-batch
+FLASK_OCR_TOKEN=ocr_secret_token_2026
 ```
 
 ## Remarque

@@ -19,13 +19,17 @@ class DashboardNoteController extends Controller
         return NotePerception::where('statut', '!=', 'annule');
     }
 
-    public function statistics()
+    public function statistics(Request $request)
     {
-        $totalNotes = $this->notCancelled()->count();
+        $base = $this->scopedTitres($request);
+        $active = fn () => (clone $base)->where('statut', '!=', 'annule');
 
-        $topCentres = NotePerception::where('statut', '!=', 'annule')
+        $totalNotes = $active()->count();
+
+        $topCentres = $active()
             ->select('id_centre_ordonnancement', DB::raw('count(*) as total'), DB::raw('MAX(created_at) as dernier_ajout'))
             ->with('centre:id,nom,description')
+            ->whereNotNull('id_centre_ordonnancement')
             ->groupBy('id_centre_ordonnancement')
             ->orderByDesc('total')
             ->limit(5)
@@ -38,7 +42,7 @@ class DashboardNoteController extends Controller
                 'dernier_ajout' => $item->dernier_ajout,
             ]);
 
-        $topArticles = NotePerception::where('statut', '!=', 'annule')
+        $topArticles = $active()
             ->whereNotNull('id_article_budgetaire')
             ->select('id_article_budgetaire', DB::raw('count(*) as total'))
             ->with('articleBudgetaire:id,article_budgetaire,nom')
@@ -53,7 +57,8 @@ class DashboardNoteController extends Controller
                 'total' => $item->total,
             ]);
 
-        $topAssujettis = NotePerception::where('statut', '!=', 'annule')
+        $topAssujettis = $active()
+            ->whereNotNull('id_assujetti')
             ->select('id_assujetti', DB::raw('count(*) as total'))
             ->with('assujetti:id,nom_raison_sociale,numero_nif')
             ->groupBy('id_assujetti')
@@ -67,7 +72,8 @@ class DashboardNoteController extends Controller
                 'total' => $item->total,
             ]);
 
-        $parClasseur = NotePerception::where('statut', '!=', 'annule')
+        $parClasseur = $active()
+            ->whereNotNull('id_classeur')
             ->select('id_classeur', DB::raw('count(*) as total'))
             ->with('classeur:id,nom_classeur')
             ->groupBy('id_classeur')
@@ -87,18 +93,18 @@ class DashboardNoteController extends Controller
                 'total_articles' => ArticleBudgetaire::where('statut', true)->count(),
                 'total_assujettis' => Assujetti::where('statut', true)->count(),
                 'total_emplacements' => Emplacement::where('statut', true)->count(),
-                'notes_actives' => NotePerception::where('statut', 'actif')->count(),
-                'notes_archivees' => NotePerception::where('statut', 'archive')->count(),
-                'notes_brouillons' => NotePerception::where('statut', 'brouillon')->count(),
-                'montant_total' => (float) NotePerception::where('statut', '!=', 'annule')->sum('montant'),
-                'montant_mois' => (float) NotePerception::where('statut', '!=', 'annule')
+                'notes_actives' => (clone $base)->where('statut', 'actif')->count(),
+                'notes_archivees' => (clone $base)->where('statut', 'archive')->count(),
+                'notes_brouillons' => (clone $base)->where('statut', 'brouillon')->count(),
+                'montant_total' => (float) $active()->sum('montant'),
+                'montant_mois' => (float) $active()
                     ->whereMonth('created_at', Carbon::now()->month)
                     ->whereYear('created_at', Carbon::now()->year)
                     ->sum('montant'),
-                'notes_aujourdhui' => NotePerception::whereDate('created_at', Carbon::today())->where('statut', '!=', 'annule')->count(),
-                'notes_semaine' => NotePerception::whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])->where('statut', '!=', 'annule')->count(),
-                'notes_mois' => NotePerception::whereMonth('created_at', Carbon::now()->month)->whereYear('created_at', Carbon::now()->year)->where('statut', '!=', 'annule')->count(),
-                'notes_annee' => NotePerception::whereYear('created_at', Carbon::now()->year)->where('statut', '!=', 'annule')->count(),
+                'notes_aujourdhui' => $active()->whereDate('created_at', Carbon::today())->count(),
+                'notes_semaine' => $active()->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])->count(),
+                'notes_mois' => $active()->whereMonth('created_at', Carbon::now()->month)->whereYear('created_at', Carbon::now()->year)->count(),
+                'notes_annee' => $active()->whereYear('created_at', Carbon::now()->year)->count(),
                 'top_centres' => $topCentres,
                 'top_articles' => $topArticles,
                 'top_assujettis' => $topAssujettis,
@@ -419,9 +425,10 @@ class DashboardNoteController extends Controller
         ]);
     }
 
-    public function recentActivities()
+    public function recentActivities(Request $request)
     {
-        $activities = $this->notCancelled()
+        $activities = $this->scopedTitres($request)
+            ->where('statut', '!=', 'annule')
             ->with(['centre:id,nom', 'classeur:id,nom_classeur', 'assujetti:id,nom_raison_sociale', 'articleBudgetaire'])
             ->orderByDesc('created_at')
             ->limit(20)
@@ -477,6 +484,24 @@ class DashboardNoteController extends Controller
                 ->orderBy('nom_classeur')
                 ->get(),
         ]);
+    }
+
+    private function scopedTitres(Request $request)
+    {
+        $query = NotePerception::query();
+        $user = $request->user();
+
+        if ($user && !$user->hasGlobalDivisionAccess()) {
+            $divisionIds = $user->accessibleDivisionIds();
+
+            if (empty($divisionIds)) {
+                return $query->whereRaw('1 = 0');
+            }
+
+            $query->whereIn('id_division', $divisionIds);
+        }
+
+        return $query;
     }
 
     private function applyPeriod($query, $periode): void

@@ -53,6 +53,9 @@ Route::get('/ping', function () {
     return response()->json(['message' => 'pong','timestamp' => now(),'status' => 'API is running']);
 });
 
+// Avatar public (les <img> ne transmettent pas le token Bearer)
+Route::get('/profil/avatar/{filename}', [ProfilController::class, 'getAvatar']);
+
 // Login avec throttle anti brute-force (5 tentatives / minute)
 Route::post('/connexion', [MonUtilisateurController::class, 'login'])->middleware('throttle:5,1');
 Route::post('/logout', [MonUtilisateurController::class, 'logout'])->middleware('auth:sanctum');
@@ -61,7 +64,7 @@ Route::post('/logout', [MonUtilisateurController::class, 'logout'])->middleware(
 Route::middleware(['auth:sanctum'])->group(function () {
 
     // --- Dashboards Notes ---
-    Route::prefix('dashboards/notes')->group(function () {
+    Route::prefix('dashboards/notes')->middleware('permission:titres.view')->group(function () {
         Route::get('/statistics', [DashboardNoteController::class, 'statistics']);
         Route::get('/articles', [DashboardNoteController::class, 'getArticles']);
         Route::get('/assujettis', [DashboardNoteController::class, 'getAssujettis']);
@@ -130,7 +133,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // --- Journal des activités ---
     Route::prefix('journal')->group(function () {
         Route::get('/', [LogController::class, 'index']);
-        Route::get('/stats', [LogController::class, 'stats']);
+        Route::get('/stats', [LogController::class, 'stats'])->middleware('permission:audit.view');
         Route::get('/tables', [LogController::class, 'tables']);
         Route::get('/{id}', [LogController::class, 'show']);
     });
@@ -151,14 +154,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // --- Dashboard général ---
     Route::prefix('dashboard')->group(function () {
-        Route::get('/statistique', [MonUtilisateurController::class, 'dashboardStats']);
-        Route::get('/recent-users', [MonUtilisateurController::class, 'recentUsers']);
-        Route::get('/statistics', [DashboardController::class, 'statistics']);
-        Route::get('/classifiers', [DashboardController::class, 'classifiers']);
-        Route::get('/classifiers/direction/{id}', [DashboardController::class, 'classifiersByDirection']);
-        Route::get('/recent', [DashboardController::class, 'recentActivities']);
-        Route::get('/direction/{id}', [DashboardController::class, 'directionStats']);
-        Route::post('/search', [DashboardController::class, 'advancedSearch']);
+        Route::get('/statistique', [MonUtilisateurController::class, 'dashboardStats'])->middleware('permission:users.view');
+        Route::get('/recent-users', [MonUtilisateurController::class, 'recentUsers'])->middleware('permission:users.view');
+        Route::get('/statistics', [DashboardController::class, 'statistics'])->middleware('permission:archives.view');
+        Route::get('/classifiers', [DashboardController::class, 'classifiers'])->middleware('permission:archives.view');
+        Route::get('/classifiers/direction/{id}', [DashboardController::class, 'classifiersByDirection'])->middleware('permission:archives.view');
+        Route::get('/recent', [DashboardController::class, 'recentActivities'])->middleware('permission:archives.view');
+        Route::get('/direction/{id}', [DashboardController::class, 'directionStats'])->middleware('permission:archives.view');
+        Route::post('/search', [DashboardController::class, 'advancedSearch'])->middleware('permission:archives.view');
     });
 
     // --- Profil ---
@@ -167,7 +170,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/utilisateurs/{id}', [ProfilController::class, 'show']);
         Route::put('/modifier/{id}', [ProfilController::class, 'modifierProfil']);
         Route::get('/afficher/{id}', [ProfilController::class, 'afficherProfil']);
-        Route::get('/avatar/{filename}', [ProfilController::class, 'getAvatar']);
     });
 
 

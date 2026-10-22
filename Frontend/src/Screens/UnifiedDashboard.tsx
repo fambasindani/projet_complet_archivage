@@ -67,10 +67,10 @@ const UnifiedDashboard = () => {
   const departement = departements[0] || null;
 
   const has = (permission) => permissions.includes(permission);
-  const canArchive = has("archiv_doc") || has("acceder_au__document") || has("archives.view");
-  const canTitres = has("note_perception") || has("acceder_au_note_perception") || has("titres.view");
-  const canUsers = has("utilisateur") || has("users.view");
-  const canAudit = has("audit.view") || has("utilisateur");
+  const canArchive = has("archives.view");
+  const canTitres = has("titres.view");
+  const canUsers = has("users.view");
+  const canAudit = has("audit.view");
 
   const headers = useMemo(
     () => ({ Authorization: `Bearer ${token}`, Accept: "application/json" }),
@@ -81,13 +81,16 @@ const UnifiedDashboard = () => {
     if (!token) return;
     silent ? setRefreshing(true) : setLoading(true);
 
+    const safeGet = (url, allowed) =>
+      allowed ? axios.get(url, { headers }) : Promise.resolve(null);
+
     const requests = [
-      axios.get(`${API_BASE_URL}/dashboard/statistics`, { headers }),
-      axios.get(`${API_BASE_URL}/dashboards/notes/statistics`, { headers }),
-      axios.get(`${API_BASE_URL}/dashboard/statistique`, { headers }),
-      axios.get(`${API_BASE_URL}/journal/stats`, { headers }),
-      axios.get(`${API_BASE_URL}/dashboard/recent`, { headers }),
-      axios.get(`${API_BASE_URL}/dashboards/notes/recent`, { headers }),
+      safeGet(`${API_BASE_URL}/dashboard/statistics`, canArchive),
+      safeGet(`${API_BASE_URL}/dashboards/notes/statistics`, canTitres),
+      safeGet(`${API_BASE_URL}/dashboard/statistique`, canUsers),
+      safeGet(`${API_BASE_URL}/journal/stats`, canAudit),
+      safeGet(`${API_BASE_URL}/dashboard/recent`, canArchive),
+      safeGet(`${API_BASE_URL}/dashboards/notes/recent`, canTitres),
     ];
 
     const results = await Promise.allSettled(requests);
@@ -180,7 +183,7 @@ const UnifiedDashboard = () => {
   const activeActivities = (stats.archives.documents_aujourdhui || 0) + (stats.titres.notes_aujourdhui || 0);
 
   const kpis = [
-    {
+    canArchive && {
       label: "Archives ordinaires",
       value: formatNumber(stats.archives.total_documents),
       detail: `${formatNumber(stats.archives.documents_actifs)} actifs`,
@@ -189,7 +192,7 @@ const UnifiedDashboard = () => {
       bar: "bg-blue-600",
       progress: Math.min(100, Math.max(8, stats.archives.documents_actifs ? (stats.archives.documents_actifs / Math.max(stats.archives.total_documents, 1)) * 100 : 8)),
     },
-    {
+    canTitres && {
       label: "Titres de perception",
       value: formatNumber(stats.titres.total_notes),
       detail: `${formatNumber(stats.titres.notes_actives)} actifs`,
@@ -198,7 +201,7 @@ const UnifiedDashboard = () => {
       bar: "bg-emerald-600",
       progress: Math.min(100, Math.max(8, stats.titres.notes_actives ? (stats.titres.notes_actives / Math.max(stats.titres.total_notes, 1)) * 100 : 8)),
     },
-    {
+    canUsers && {
       label: "Utilisateurs",
       value: formatNumber(stats.users.total),
       detail: `${formatNumber(stats.users.active)} comptes actifs`,
@@ -207,7 +210,7 @@ const UnifiedDashboard = () => {
       bar: "bg-violet-600",
       progress: Math.min(100, Math.max(8, stats.users.total ? (stats.users.active / stats.users.total) * 100 : 8)),
     },
-    {
+    canAudit && {
       label: "Activité du jour",
       value: formatNumber(activeActivities),
       detail: `${formatNumber(stats.journal.today)} opérations journalisées`,
@@ -216,7 +219,7 @@ const UnifiedDashboard = () => {
       bar: "bg-amber-500",
       progress: Math.min(100, Math.max(8, activeActivities ? 62 : 8)),
     },
-  ];
+  ].filter(Boolean);
 
   const quickActions = [
     canArchive && {
@@ -323,20 +326,20 @@ const UnifiedDashboard = () => {
                   <p className="text-[9px] font-extrabold uppercase tracking-[0.2em] text-slate-400">
                     Repères du jour
                   </p>
-                  {loading ? (
+                  {canAudit && (loading ? (
                     <Skeleton className="h-3 w-8" />
                   ) : (
                     <span className="font-mono text-[9px] text-slate-400">{formatNumber(stats.journal.today)}</span>
-                  )}
+                  ))}
                 </div>
 
                 <div className="mt-4 divide-y divide-slate-100">
                   {[
-                    ['Archives', formatNumber(stats.archives.total_documents)],
-                    ['Titres de perception', formatNumber(stats.titres.total_notes)],
-                    ['Activité du jour', formatNumber(activeActivities)],
-                    ['Agents actifs', formatNumber(stats.users.active)],
-                  ].map(([label, value]) => (
+                    canArchive && ['Archives', formatNumber(stats.archives.total_documents)],
+                    canTitres && ['Titres de perception', formatNumber(stats.titres.total_notes)],
+                    (canArchive || canTitres) && ['Activité du jour', formatNumber(activeActivities)],
+                    canUsers && ['Agents actifs', formatNumber(stats.users.active)],
+                  ].filter(Boolean).map(([label, value]) => (
                     <div key={label} className="flex items-baseline justify-between gap-3 py-2.5">
                       <span className="text-[11px] font-medium text-slate-500">{label}</span>
                       {loading ? (
@@ -346,6 +349,11 @@ const UnifiedDashboard = () => {
                       )}
                     </div>
                   ))}
+                  {!canArchive && !canTitres && !canUsers && (
+                    <p className="py-4 text-center text-[11px] text-slate-400">
+                      Aucun repère accessible avec vos permissions.
+                    </p>
+                  )}
                 </div>
 
                 <p className="mt-4 border-t border-slate-100 pt-3 text-[10px] text-slate-400">
@@ -357,7 +365,15 @@ const UnifiedDashboard = () => {
 
           {/* KPI */}
           <section className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {kpis.map((kpi, index) => (
+            {kpis.length === 0 ? (
+              <div className="sm:col-span-2 xl:col-span-4 rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-8 text-center">
+                <FaShieldAlt className="mx-auto text-2xl text-slate-300" />
+                <p className="mt-3 text-sm font-bold text-slate-700">Aucun indicateur accessible</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Vos permissions ne donnent accès à aucun module de tableau de bord.
+                </p>
+              </div>
+            ) : kpis.map((kpi, index) => (
               <div
                 key={kpi.label}
                 className="animate-fade-up rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card"
@@ -574,10 +590,12 @@ const UnifiedDashboard = () => {
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Connectée
                     </span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Opérations journalisées</span>
-                    <span className="font-bold text-slate-700">{formatNumber(stats.journal.total)}</span>
-                  </div>
+                  {canAudit && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500">Opérations journalisées</span>
+                      <span className="font-bold text-slate-700">{formatNumber(stats.journal.total)}</span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between">
                     <span className="text-slate-500">Dernière activité</span>
                     <span className="font-bold text-slate-700">
@@ -668,6 +686,7 @@ const UnifiedDashboard = () => {
             </div>
 
             <div className="space-y-4">
+              {canArchive && (
               <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
                 <h3 className="font-display text-sm font-extrabold tracking-tight text-navy-900">
                   Répartition des archives
@@ -715,7 +734,9 @@ const UnifiedDashboard = () => {
                   )}
                 </div>
               </div>
+              )}
 
+              {canAudit && (
               <div className="rounded-2xl border border-slate-200/80 bg-gradient-to-br from-navy-900 to-navy-800 p-5 text-white shadow-card">
                 <div className="flex items-center gap-2">
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gold-400/[0.15] text-gold-300 ring-1 ring-gold-400/20">
@@ -731,10 +752,11 @@ const UnifiedDashboard = () => {
                   to={canAudit ? "/gestion-utilisateurs/journal" : "/profil"}
                   className="mt-4 inline-flex items-center gap-2 rounded-lg bg-white/10 px-3 py-2 text-[11px] font-bold text-white ring-1 ring-white/10 transition hover:bg-white/20"
                 >
-                  {canAudit ? "Consulter le journal" : "Voir mon profil"}
+                  Consulter le journal
                   <FaArrowRight size={9} />
                 </Link>
               </div>
+              )}
             </div>
           </section>
         </main>

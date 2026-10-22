@@ -107,14 +107,18 @@ class DashboardController extends Controller
         return $this->Searchdeclaration($request);
     }
 
-    public function statistics()
+    public function statistics(Request $request)
     {
-        $totalDocuments = Archive::count();
-        $documentsActifs = Archive::where('statut', 'actif')->count();
-        $documentsArchives = Archive::where('statut', 'archive')->count();
+        $base = $this->scopedArchives($request);
 
-        $topClassificateurs = Archive::select('id_classeur', DB::raw('count(*) as total'), DB::raw('MAX(created_at) as dernier_ajout'))
+        $totalDocuments = (clone $base)->count();
+        $documentsActifs = (clone $base)->where('statut', 'actif')->count();
+        $documentsArchives = (clone $base)->where('statut', 'archive')->count();
+
+        $topClassificateurs = (clone $base)
+            ->select('id_classeur', DB::raw('count(*) as total'), DB::raw('MAX(created_at) as dernier_ajout'))
             ->with('classeur:id,nom_classeur,created_at')
+            ->whereNotNull('id_classeur')
             ->groupBy('id_classeur')
             ->orderByDesc('total')
             ->limit(5)
@@ -127,8 +131,10 @@ class DashboardController extends Controller
                 'created_at' => $item->classeur->created_at ?? null,
             ]);
 
-        $topDirections = Archive::select('id_division', DB::raw('count(*) as total'))
+        $topDirections = (clone $base)
+            ->select('id_division', DB::raw('count(*) as total'))
             ->with('division:id,nom,sigle')
+            ->whereNotNull('id_division')
             ->groupBy('id_division')
             ->orderByDesc('total')
             ->limit(5)
@@ -144,13 +150,13 @@ class DashboardController extends Controller
             'success' => true,
             'data' => [
                 'total_documents' => $totalDocuments,
-                'total_classificateurs' => Classeur::whereHas('archives')->count(),
-                'total_directions' => Division::count(),
+                'total_classificateurs' => (clone $base)->whereNotNull('id_classeur')->distinct()->count('id_classeur'),
+                'total_directions' => (clone $base)->whereNotNull('id_division')->distinct()->count('id_division'),
                 'documents_actifs' => $documentsActifs,
                 'documents_archives' => $documentsArchives,
-                'documents_aujourdhui' => Archive::whereDate('created_at', Carbon::today())->count(),
-                'documents_semaine' => Archive::whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])->count(),
-                'documents_mois' => Archive::whereMonth('created_at', Carbon::now()->month)->whereYear('created_at', Carbon::now()->year)->count(),
+                'documents_aujourdhui' => (clone $base)->whereDate('created_at', Carbon::today())->count(),
+                'documents_semaine' => (clone $base)->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])->count(),
+                'documents_mois' => (clone $base)->whereMonth('created_at', Carbon::now()->month)->whereYear('created_at', Carbon::now()->year)->count(),
                 'top_classificateurs' => $topClassificateurs,
                 'top_directions' => $topDirections,
             ],
@@ -352,9 +358,10 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function recentActivities()
+    public function recentActivities(Request $request)
     {
-        $activities = Archive::with(['utilisateur', 'classeur', 'division'])
+        $activities = $this->scopedArchives($request)
+            ->with(['utilisateur', 'classeur', 'division'])
             ->orderByDesc('created_at')
             ->limit(15)
             ->get()
@@ -373,6 +380,24 @@ class DashboardController extends Controller
             ]);
 
         return response()->json(['success' => true, 'data' => $activities]);
+    }
+
+    private function scopedArchives(Request $request)
+    {
+        $query = Archive::query();
+        $user = $request->user();
+
+        if ($user && !$user->hasGlobalDivisionAccess()) {
+            $divisionIds = $user->accessibleDivisionIds();
+
+            if (empty($divisionIds)) {
+                return $query->whereRaw('1 = 0');
+            }
+
+            $query->whereIn('id_division', $divisionIds);
+        }
+
+        return $query;
     }
 
     private function applyPeriodFilter($query, $periode): void

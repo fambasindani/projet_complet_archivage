@@ -2,7 +2,7 @@
 // @ts-nocheck
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { useParams, useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { useHistory } from "react-router-dom";
 import {
   FaUserCircle,
   FaEnvelope,
@@ -28,6 +28,7 @@ import {
   FaFileSignature,
   FaExclamationCircle,
   FaCamera,
+  FaPhone,
   FaTimes,
   FaSave,
   FaKey,
@@ -44,8 +45,6 @@ import Menus from "../Composant/Menus";
 import { toast } from "../Composant/Toast";
 
 const ProfilScreen = () => {
-  const utilisateur = JSON.parse(localStorage.getItem("utilisateur")) || {};
-  const id = utilisateur?.id || "";
   const navRouter = useHistory();
   const token = GetTokenOrRedirect();
 
@@ -65,6 +64,7 @@ const ProfilScreen = () => {
     current_password: "",
     password: "",
     password_confirmation: "",
+    telephone: "",
     avatar: null,
   });
 
@@ -73,13 +73,13 @@ const ProfilScreen = () => {
     total_documents: 0,
     documents_mois: 0,
     dernier_activite: null,
+    archives: 0,
+    titres: 0,
   });
-
-  const userId = id || 17;
 
   useEffect(() => {
     if (token) fetchUserProfile();
-  }, [userId, token]);
+  }, [token]);
 
   useEffect(() => {
     if (showModal) document.body.style.overflow = "hidden";
@@ -97,6 +97,7 @@ const ProfilScreen = () => {
         current_password: "",
         password: "",
         password_confirmation: "",
+        telephone: user.telephone || "",
         avatar: null,
       }));
     }
@@ -111,16 +112,23 @@ const ProfilScreen = () => {
   const fetchUserProfile = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API_BASE_URL}/profil/afficher/${userId}`, {
+      const response = await axios.get(`${API_BASE_URL}/profil/mon-profil`, {
         headers: getAuthHeaders(),
       });
       if (response.data && response.data.success) {
-        setUser(response.data.data);
+        const profile = response.data.data;
+        setUser(profile);
         setUserStats({
-          total_documents: Math.floor(Math.random() * 200) + 50,
-          documents_mois: Math.floor(Math.random() * 30) + 5,
-          dernier_activite: new Date().toISOString(),
+          total_documents: profile.stats?.total_documents || 0,
+          documents_mois: profile.stats?.documents_mois || 0,
+          dernier_activite: profile.stats?.dernier_activite || null,
+          archives: profile.stats?.archives || 0,
+          titres: profile.stats?.titres || 0,
         });
+        localStorage.setItem("utilisateur", JSON.stringify({
+          ...JSON.parse(localStorage.getItem("utilisateur") || "{}"),
+          ...profile,
+        }));
       }
     } catch (error) {
       if (error.response?.status === 401) return;
@@ -138,10 +146,23 @@ const ProfilScreen = () => {
     if (!user) return;
     try {
       const response = await axios.get(
-        `${API_BASE_URL}/profil/afficher/${user.id}?t=${Date.now()}`,
+        `${API_BASE_URL}/profil/mon-profil?t=${Date.now()}`,
         { headers: getAuthHeaders() }
       );
-      if (response.data && response.data.success) setUser(response.data.data);
+      if (response.data && response.data.success) {
+        setUser(response.data.data);
+        setUserStats({
+          total_documents: response.data.data.stats?.total_documents || 0,
+          documents_mois: response.data.data.stats?.documents_mois || 0,
+          dernier_activite: response.data.data.stats?.dernier_activite || null,
+          archives: response.data.data.stats?.archives || 0,
+          titres: response.data.data.stats?.titres || 0,
+        });
+        localStorage.setItem("utilisateur", JSON.stringify({
+          ...JSON.parse(localStorage.getItem("utilisateur") || "{}"),
+          ...response.data.data,
+        }));
+      }
     } catch (error) {
       console.error("Erreur rafraîchissement profil:", error);
     }
@@ -149,10 +170,10 @@ const ProfilScreen = () => {
 
   const handleDirectAvatarUpload = async (e) => {
     const file = e.target.files[0];
-    if (!file) return;
-    const validTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif"];
+    if (!file || !user) return;
+    const validTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif", "image/webp"];
     if (!validTypes.includes(file.type)) {
-      toast.error("Notification");
+      toast.error("Format non supporté. Utilisez JPG, PNG, GIF ou WEBP.");
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
@@ -179,7 +200,7 @@ const ProfilScreen = () => {
         toast.success("Photo mise à jour");
       }
     } catch (error) {
-      toast.error("Impossible de modifier la photo");
+      toast.error(error.response?.data?.message || "Impossible de modifier la photo");
       setAvatarPreview(null);
     } finally {
       setUploadingAvatar(false);
@@ -202,9 +223,9 @@ const ProfilScreen = () => {
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      const validTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif"];
+      const validTypes = ["image/jpeg", "image/png", "image/jpg", "image/gif", "image/webp"];
       if (!validTypes.includes(file.type)) {
-        setErrors((prev) => ({ ...prev, avatar: "Format d'image non supporté. Utilisez JPG, PNG ou GIF" }));
+        setErrors((prev) => ({ ...prev, avatar: "Format d'image non supporté. Utilisez JPG, PNG, GIF ou WEBP" }));
         return;
       }
       if (file.size > 2 * 1024 * 1024) {
@@ -265,6 +286,7 @@ const ProfilScreen = () => {
       if (formData.nom !== user.nom) formDataToSend.append("nom", formData.nom);
       if (formData.prenom !== user.prenom) formDataToSend.append("prenom", formData.prenom);
       if (formData.email !== user.email) formDataToSend.append("email", formData.email);
+      if ((formData.telephone || "") !== (user.telephone || "")) formDataToSend.append("telephone", formData.telephone || "");
       if (formData.avatar) formDataToSend.append("avatar", formData.avatar);
       if (Array.from(formDataToSend.entries()).length <= 1) {
         toast.info("Vous n'avez apporté aucune modification");
@@ -327,6 +349,7 @@ const ProfilScreen = () => {
     const map = {
       active: { bg: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500", text: "Actif", Icon: FaCheckCircle },
       inactive: { bg: "bg-amber-50 text-amber-700 border-amber-200", dot: "bg-amber-500", text: "Inactif", Icon: FaTimesCircle },
+      bloque: { bg: "bg-red-50 text-red-700 border-red-200", dot: "bg-red-500", text: "Bloqué", Icon: FaLock },
       bloqué: { bg: "bg-red-50 text-red-700 border-red-200", dot: "bg-red-500", text: "Bloqué", Icon: FaLock },
     };
     const c = map[statut] || map.active;
@@ -357,8 +380,40 @@ const ProfilScreen = () => {
         current_password: "",
         password: "",
         password_confirmation: "",
+        telephone: user.telephone || "",
         avatar: null,
       }));
+    }
+  };
+
+  const handlePrintProfile = () => window.print();
+
+  const handleExportProfile = () => {
+    try {
+      const blob = new Blob([JSON.stringify(user, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `profil-${user.id}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Profil exporté");
+    } catch {
+      toast.error("Export impossible");
+    }
+  };
+
+  const handleShareProfile = async () => {
+    const text = `${user.prenom} ${user.nom} — ${user.email}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "Profil DGRAD", text });
+      } else {
+        await navigator.clipboard.writeText(text);
+        toast.success("Informations du profil copiées");
+      }
+    } catch {
+      // partage annulé
     }
   };
 
@@ -444,7 +499,7 @@ const ProfilScreen = () => {
                   <button onClick={() => setShowModal(true)} className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold shadow-sm hover:bg-indigo-700 transition">
                     <FaEdit size={14} /> Modifier le profil
                   </button>
-                  <button className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-50 transition">
+                  <button onClick={handleExportProfile} className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-medium hover:bg-slate-50 transition">
                     <FaDownload size={14} /> Exporter
                   </button>
                 </div>
@@ -497,7 +552,17 @@ const ProfilScreen = () => {
                         </div>
                       </div>
                     </div>
-                    <input type="file" id="avatar-direct-upload" ref={fileInputRef} accept="image/jpeg,image/png,image/jpg,image/gif" onChange={handleDirectAvatarUpload} className="hidden" />
+                    <input type="file" id="avatar-direct-upload" ref={fileInputRef} accept="image/jpeg,image/png,image/jpg,image/gif,image/webp" onChange={handleDirectAvatarUpload} className="hidden" />
+
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingAvatar}
+                      className="mt-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+                    >
+                      {uploadingAvatar ? <FaSpinner className="animate-spin" size={11} /> : <FaCamera size={11} />}
+                      Changer la photo
+                    </button>
 
                     <h3 className="font-bold text-slate-900 text-lg mt-4">
                       {user.prenom} {user.nom}
@@ -522,10 +587,10 @@ const ProfilScreen = () => {
                     </div>
 
                     <div className="flex gap-2 mt-6">
-                      <button className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
+                      <button onClick={handlePrintProfile} className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
                         <FaPrint size={12} /> Imprimer
                       </button>
-                      <button className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
+                      <button onClick={handleShareProfile} className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
                         <FaShare size={12} /> Partager
                       </button>
                     </div>
@@ -598,7 +663,11 @@ const ProfilScreen = () => {
                           {[
                             { label: "Nom complet", value: `${user.prenom} ${user.nom}`, icon: FaUser },
                             { label: "Email", value: user.email, icon: FaEnvelope },
-                            { label: "ID Utilisateur", value: `#${user.id}`, icon: FaIdCard },
+                            { label: "Matricule", value: user.matricule || "—", icon: FaIdCard },
+                            { label: "Téléphone", value: user.telephone || "—", icon: FaPhone },
+                            { label: "Direction", value: user.direction?.nom || "—", icon: FaBuilding },
+                            { label: "Division principale", value: user.division ? `${user.division.sigle} — ${user.division.nom}` : "—", icon: FaBuilding },
+                            { label: "Accès", value: user.acces_direction ? "Toute la direction" : `${user.divisions?.length || 0} division(s)`, icon: FaShieldAlt },
                             { label: "Date d'inscription", value: formatDate(user.datecreation), icon: FaCalendarAlt },
                           ].map((item) => (
                             <div key={item.label} className="bg-slate-50 rounded-xl p-4 border border-slate-100">
@@ -715,6 +784,42 @@ const ProfilScreen = () => {
 
             <form onSubmit={handleSubmit} className="flex-1 overflow-hidden flex flex-col">
               <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-navy-900 text-lg font-extrabold text-white ring-4 ring-white shadow">
+                    {avatarPreview ? (
+                      <img src={avatarPreview} alt="Aperçu" className="h-full w-full object-cover" />
+                    ) : user.avatar_url ? (
+                      <img src={`${user.avatar_url}?t=${Date.now()}`} alt={user.full_name} className="h-full w-full object-cover" />
+                    ) : (
+                      getUserInitials()
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-slate-900">Photo de profil</p>
+                    <p className="mt-0.5 text-[10px] text-slate-500">JPG, PNG, GIF ou WEBP · 2 Mo maximum</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => document.getElementById("avatar-input")?.click()}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-navy-900 px-3 py-1.5 text-[10px] font-bold text-white hover:bg-navy-800"
+                      >
+                        <FaCamera size={9} /> Changer la photo
+                      </button>
+                      {formData.avatar && (
+                        <button
+                          type="button"
+                          onClick={handleRemoveAvatar}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold text-slate-600 hover:bg-slate-50"
+                        >
+                          <FaTimes size={9} /> Annuler
+                        </button>
+                      )}
+                    </div>
+                    <input id="avatar-input" type="file" accept="image/jpeg,image/png,image/jpg,image/gif,image/webp" onChange={handleAvatarChange} className="hidden" />
+                    {errors.avatar && <FieldError error={errors.avatar} />}
+                  </div>
+                </div>
+
                 <div>
                   <h6 className="font-semibold text-slate-900 flex items-center gap-2 pb-3 border-b border-slate-100 mb-4">
                     <FaUserCircle className="text-indigo-600" /> Informations personnelles
@@ -737,6 +842,14 @@ const ProfilScreen = () => {
                         <input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="exemple@domaine.com" className={`w-full pl-10 pr-3.5 py-2.5 bg-white border rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition ${errors.email ? "border-red-300 bg-red-50" : "border-slate-200"}`} />
                       </div>
                       <FieldError error={errors.email} />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">Téléphone</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"><FaPhone size={14} /></span>
+                        <input type="tel" name="telephone" value={formData.telephone} onChange={handleInputChange} placeholder="+243 ..." className={`w-full pl-10 pr-3.5 py-2.5 bg-white border rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition ${errors.telephone ? "border-red-300 bg-red-50" : "border-slate-200"}`} />
+                      </div>
+                      <FieldError error={errors.telephone} />
                     </div>
                   </div>
                 </div>

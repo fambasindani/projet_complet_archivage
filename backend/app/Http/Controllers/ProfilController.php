@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Archive;
 use App\Models\MonUtilisateur;
+use App\Models\TitrePerception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -15,52 +17,84 @@ class ProfilController extends Controller
      */
     public function monProfil(Request $request)
     {
-        $utilisateur = $request->user()->load([
-            'division.direction',
-            'roles',
-            'roles.permissions'
-        ]);
+        $utilisateur = $request->user();
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'id' => $utilisateur->id,
-                'nom' => $utilisateur->nom,
-                'prenom' => $utilisateur->prenom,
-                'full_name' => $utilisateur->full_name,
-                'email' => $utilisateur->email,
-                'statut' => $utilisateur->statut,
-                'datecreation' => $utilisateur->datecreation,
-                'dernierconnection' => $utilisateur->dernierconnection,
-                
-                'divisions' => $utilisateur->division ? [$utilisateur->division] : [],
-                'division' => $utilisateur->division,
-                'direction' => $utilisateur->division?->direction,
-                
-                'roles' => $utilisateur->roles->map(function($role) {
-                    return [
-                        'id' => $role->id,
-                        'nom' => $role->nom,
-                        'permissions' => $role->permissions->pluck('code')
-                    ];
-                }),
-                
-                'permissions' => $utilisateur->roles->flatMap(function($role) {
-                    return $role->permissions->pluck('code');
-                })->unique()->values(),
-                
-                'created_at' => $utilisateur->created_at,
-                'updated_at' => $utilisateur->updated_at
-            ]
+            'data' => $this->profileData($utilisateur),
         ]);
+    }
+
+    private function profileData($user): array
+    {
+        $user->loadMissing(['division.direction', 'divisions.direction', 'roles.permissions']);
+
+        $division = $user->division;
+        $divisions = $user->divisions->sortBy('sigle')->values();
+
+        if ($division && !$divisions->contains(fn ($item) => (int) $item->id === (int) $division->id)) {
+            $divisions->prepend($division);
+        }
+
+        $archives = Archive::where('id_user_createur', $user->id)->count();
+        $titres = TitrePerception::where('id_user_createur', $user->id)->count();
+        $archivesMois = Archive::where('id_user_createur', $user->id)
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->count();
+        $titresMois = TitrePerception::where('id_user_createur', $user->id)
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->count();
+
+        $lastArchive = Archive::where('id_user_createur', $user->id)->max('updated_at');
+        $lastTitre = TitrePerception::where('id_user_createur', $user->id)->max('updated_at');
+        $lastActivity = collect([$lastArchive, $lastTitre])->filter()->sortDesc()->first();
+
+        return [
+            'id' => $user->id,
+            'nom' => $user->nom,
+            'prenom' => $user->prenom,
+            'full_name' => $user->full_name,
+            'email' => $user->email,
+            'matricule' => $user->matricule,
+            'telephone' => $user->telephone,
+            'statut' => $user->statut,
+            'avatar' => $user->avatar,
+            'avatar_url' => $user->avatar ? url('api/profil/avatar/' . $user->avatar) : null,
+            'initiales' => $this->getInitiales($user),
+            'couleur_avatar' => $this->getCouleurAvatar($user->id),
+            'datecreation' => $user->created_at,
+            'dernierconnection' => $user->derniere_connexion,
+            'acces_direction' => (bool) $user->acces_direction,
+            'divisions' => $divisions,
+            'division' => $division,
+            'direction' => $division?->direction,
+            'roles' => $user->roles,
+            'permissions' => $user->roles->flatMap(fn ($role) => $role->permissions->pluck('code'))->unique()->values(),
+            'stats' => [
+                'total_documents' => $archives + $titres,
+                'archives' => $archives,
+                'titres' => $titres,
+                'documents_mois' => $archivesMois + $titresMois,
+                'dernier_activite' => $lastActivity,
+            ],
+            'created_at' => $user->created_at,
+            'updated_at' => $user->updated_at,
+        ];
     }
 
     /**
      * Afficher le profil d'un utilisateur spécifique
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        $utilisateur = MonUtilisateur::with(['division.direction', 'roles'])->find($id);
+        $auth = $request->user();
+        if (!$auth || ((int) $auth->id !== (int) $id && !$auth->hasRole('Admin'))) {
+            return response()->json(['success' => false, 'message' => 'Acces non autorise'], 403);
+        }
+
+        $utilisateur = MonUtilisateur::find($id);
 
         if (!$utilisateur) {
             return response()->json([
@@ -71,19 +105,7 @@ class ProfilController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'id' => $utilisateur->id,
-                'nom' => $utilisateur->nom,
-                'prenom' => $utilisateur->prenom,
-                'datecreation' => $utilisateur->created_at,
-                'avatar' => $utilisateur->avatar,
-                'full_name' => $utilisateur->full_name,
-                'email' => $utilisateur->email,
-                'statut' => $utilisateur->statut,
-                'divisions' => $utilisateur->division ? [$utilisateur->division] : [],
-                'division' => $utilisateur->division,
-                'roles' => $utilisateur->roles
-            ]
+            'data' => $this->profileData($utilisateur),
         ]);
     }
 
@@ -101,12 +123,18 @@ class ProfilController extends Controller
         ], 404);
     }
 
+    $auth = $request->user();
+    if (!$auth || ((int) $auth->id !== (int) $id && !$auth->hasRole('Admin'))) {
+        return response()->json(['success' => false, 'message' => 'Acces non autorise'], 403);
+    }
+
     // ✅ Validation avec ancien mot de passe obligatoire si nouveau mot de passe fourni
     $rules = [
         'nom' => 'sometimes|string|max:50',
         'prenom' => 'sometimes|string|max:50',
         'email' => 'sometimes|email|unique:users,email,' . $id,
-        'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5048',
+        'telephone' => 'nullable|string|max:30',
+        'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5048',
     ];
 
     // 🔐 Si un nouveau mot de passe est fourni, l'ancien devient obligatoire
@@ -153,6 +181,9 @@ class ProfilController extends Controller
         if ($request->has('email')) {
             $updateData['email'] = $request->email;
         }
+        if ($request->has('telephone')) {
+            $updateData['telephone'] = $request->telephone;
+        }
         
         // 🔐 Mise à jour du mot de passe uniquement si fourni ET après vérification
         if ($request->filled('password')) {
@@ -184,23 +215,14 @@ class ProfilController extends Controller
         // 🔥 Recharger l'utilisateur
         $user = MonUtilisateur::find($id);
         
-        // 🔥 URL complète avec le prefix profil
+        // 🔥 URL complète avec le prefix API
         $user->avatar_url = $user->avatar 
-            ? url('profil/avatar/' . $user->avatar)
+            ? url('api/profil/avatar/' . $user->avatar)
             : null;
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'id' => $user->id,
-                'nom' => $user->nom,
-                'prenom' => $user->prenom,
-                'email' => $user->email,
-                'avatar' => $user->avatar,
-                'avatar_url' => $user->avatar_url,
-                'statut' => $user->statut,
-                'updated_at' => $user->updated_at
-            ],
+            'data' => $this->profileData($user),
             'message' => 'Profil mis à jour avec succès'
         ], 200);
 
@@ -215,10 +237,15 @@ class ProfilController extends Controller
     /**
      * Afficher le profil d'un utilisateur avec toutes ses relations
      */
-    public function afficherProfil($id)
+    public function afficherProfil(Request $request, $id)
     {
-        $user = MonUtilisateur::with(['roles', 'division.direction'])->find($id);
-        
+        $auth = $request->user();
+        if (!$auth || ((int) $auth->id !== (int) $id && !$auth->hasRole('Admin'))) {
+            return response()->json(['success' => false, 'message' => 'Acces non autorise'], 403);
+        }
+
+        $user = MonUtilisateur::find($id);
+
         if (!$user) {
             return response()->json([
                 'success' => false,
@@ -226,20 +253,9 @@ class ProfilController extends Controller
             ], 404);
         }
 
-        // 🔥 URL complète avec le prefix profil
-        $user->avatar_url = $user->avatar 
-            ? url('api/profil/avatar/' . $user->avatar)
-            : null;
-        
-        // 🔥 Ajouter les initiales pour fallback
-        $user->initiales = $this->getInitiales($user);
-        
-        // 🔥 Ajouter une couleur basée sur l'ID
-        $user->couleur_avatar = $this->getCouleurAvatar($user->id);
-
         return response()->json([
             'success' => true,
-            'data' => $user,
+            'data' => $this->profileData($user),
             'message' => 'Profil récupéré avec succès'
         ], 200);
     }

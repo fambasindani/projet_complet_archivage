@@ -85,14 +85,14 @@ const Menus = () => {
           to: "/dashboard/archivage",
           label: "Tableau de bord AD",
           icon: <FaTachometerAlt size={10} />,
-          visible: true,
+          visible: has("archives.view"),
           activePaths: ["/dashboard/archivage"],
         },
         {
           to: "/archives",
           label: "Archives",
           icon: <FaArchive size={10} />,
-          visible: true,
+          visible: has("archives.view"),
           activePaths: ["/archives"],
         },
         {
@@ -142,14 +142,14 @@ const Menus = () => {
           to: "/dashboard/titres",
           label: "Tableau de bord TP",
           icon: <FaTachometerAlt size={10} />,
-          visible: true,
+          visible: has("titres.view"),
           activePaths: ["/dashboard/titres"],
         },
         {
           to: "/titres",
           label: "Titres",
           icon: <FaFileInvoiceDollar size={10} />,
-          visible: true,
+          visible: has("titres.view"),
           activePaths: ["/titres"],
         },
         {
