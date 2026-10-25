@@ -7,6 +7,7 @@ Application de gestion des archives et des titres de perception de la DGRAD.
 - `backend/` : API Laravel 8 (archives, titres de perception, utilisateurs, rôles, permissions, OCR, audit).
 - `Frontend/` : application React/Vite avec les espaces Archivage ordinaire, Titres de perception, Administration et Recherche OCR.
 - `ocr/` : service Python Flask pour l'extraction de texte OCR.
+- `docs/Documentation_Projet_Archivage_DGRAD.docx` : documentation technique et fonctionnelle complète.
 
 ## Fonctionnalités principales
 
