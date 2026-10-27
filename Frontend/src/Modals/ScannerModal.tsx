@@ -19,6 +19,7 @@ import {
 } from 'react-icons/fa';
 import DetailModal from "./DetailModal";
 import ConfirmModal from "./ConfirmModal";
+import ModalHeader from "../Composant/ModalHeader";
 import { OCR_URL } from "../config";
 
 
@@ -440,24 +441,13 @@ const ScannerModal = ({ onClose, onScanComplete }) => {
         }}>
             <div className="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
                 <div className="modal-content border border-slate-200-0 shadow-lg" style={{ maxHeight: '90vh' }}>
-                    <div className="modal-header bg-indigo-600 text-white">
-                        <h5 className="modal-title flex items-center">
-                            <FaPrint className="mr-2" /> Scanner un document
-                        </h5>
-                        <button 
-                            type="button" 
-                            className="close text-white"
-                            onClick={onClose}
-                            style={{ 
-                                background: 'none', 
-                                border: 'none', 
-                                fontSize: '1.5rem',
-                                opacity: 0.8 
-                            }}
-                        >
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
+                    <ModalHeader
+                        title="Scanner un document"
+                        subtitle="Numérisation et rattachement au dossier"
+                        eyebrow="DGRAD · Pièces justificatives"
+                        icon={<FaPrint size={15} />}
+                        onClose={onClose}
+                    />
                     
                     <div className="modal-body p-4" style={{ 
                         overflowY: 'auto',

@@ -168,7 +168,7 @@ const ClasseurScreen = () => {
     };
 
     const handleDelete = (id) => {
-        if (!token) { toast.error("Vous n'Ãªtes pas authentifié. Veuillez vous reconnecter."); return; }
+        if (!token) { toast.error("Vous n'êtes pas authentifié. Veuillez vous reconnecter."); return; }
         const permissions = JSON.parse(localStorage.getItem("permissions") || "[]");
         if (!permissions.includes("supprimer_classeur")) { toast.error("Vous n'avez pas la permission 'supprimer_classeur' pour désactiver cet élément."); return; }
         const _item = classeurs.find((x) => x.id === id);
@@ -189,7 +189,7 @@ const ClasseurScreen = () => {
                 const status = error.response.status;
                 const data = error.response.data;
                 if (status === 403) errorMessage = data?.message || "Permission refusée.";
-                else if (status === 404) errorMessage = data?.message || "Ã‰lément non trouvé.";
+                else if (status === 404) errorMessage = data?.message || "Élément non trouvé.";
                 else if (status === 401) errorMessage = "Session expirée. Veuillez vous reconnecter.";
                 else if (data?.message) errorMessage = data.message;
             } else if (error.request) errorMessage = "Impossible de contacter le serveur.";

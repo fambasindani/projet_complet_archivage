@@ -21,6 +21,7 @@ import {
 import { API_BASE_URL } from "../config";
 import DetailModal from "./DetailModal";
 import ConfirmModal from "./ConfirmModal";
+import ModalHeader from "../Composant/ModalHeader";
 
 const FileUploadModal = ({
     documentId,
@@ -476,12 +477,13 @@ const FileUploadModal = ({
                 <div className="modal fade show block" tabIndex="-1">
                     <div className="modal-dialog modal-dialog-centered">
                         <div className="modal-content border border-slate-200-0 shadow-lg">
-                            <div className="modal-header bg-red-600 text-white">
-                                <h5 className="modal-title">Erreur</h5>
-                                <button type="button" className="close text-white" onClick={onClose}>
-                                    <span>&times;</span>
-                                </button>
-                            </div>
+                            <ModalHeader
+                                title="Document introuvable"
+                                subtitle="Identifiant du document manquant"
+                                eyebrow="DGRAD · Gestion documentaire"
+                                icon={<FaExclamationTriangle size={15} />}
+                                onClose={onClose}
+                            />
                             <div className="modal-body text-center py-5">
                                 <FaTimes className="text-red-600 mb-3" style={{ fontSize: '3rem' }} />
                                 <h5>Document non trouv�</h5>
@@ -501,31 +503,14 @@ const FileUploadModal = ({
                 <div className="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
                     <div className="modal-content border border-slate-200-0 shadow-lg" style={{ maxHeight: '90vh' }}>
                         
-                        <div className="modal-header bg-indigo-600 text-white sticky-top">
-                            <div className="flex items-center">
-                                <FaFilePdf className="mr-2" style={{ fontSize: '1.5rem' }} />
-                                <div>
-                                    <h5 className="modal-title mb-0">Fichiers PDF</h5>
-                                    <small className="block">
-                                        Document #{documentId} � Classeur: {id_classeur || 'N/A'}
-                                        {scanInProgress && (
-                                            <span className="ml-2 inline-flex px-2 py-0.5 rounded-lg-full text-xs font-medium inline-flex px-2 py-0.5 rounded-lg-full text-xs font-medium-warning">
-                                                <FaSpinner className="fa-spin mr-1" /> Scan en cours...
-                                            </span>
-                                        )}
-                                    </small>
-                                </div>
-                            </div>
-                            <button 
-                                type="button" 
-                                className="close text-white" 
-                                onClick={onClose} 
-                                disabled={uploading || scanInProgress}
-                                style={{ opacity: (uploading || scanInProgress) ? 0.5 : 1 }}
-                            >
-                                <span>&times;</span>
-                            </button>
-                        </div>
+                        <ModalHeader
+                            title="Fichiers PDF"
+                            subtitle={`Document #${documentId} · Classeur : ${id_classeur || 'N/A'}`}
+                            eyebrow="DGRAD · Pièces justificatives"
+                            icon={<FaFilePdf size={15} />}
+                            onClose={onClose}
+                            closeDisabled={uploading || scanInProgress}
+                        />
 
                         <div className="modal-body">
                             {/* Indicateur de scan en cours */}

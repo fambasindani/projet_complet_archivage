@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
 import GetTokenOrRedirect from '../Composant/getTokenOrRedirect';
+import ModalHeader from '../Composant/ModalHeader';
 import { FaEdit, FaFolder, FaPlus, FaSpinner, FaTimes } from 'react-icons/fa';
 import { toast } from '../Composant/Toast';
 
@@ -68,16 +69,14 @@ const ModalClasseurScreen = ({ isOpen, onClose, classeurToEdit = null, onSuccess
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-navy-950/55 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200">
-        <div className="flex items-center justify-between bg-navy-900 px-6 py-4 text-white">
-          <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10"><FaFolder size={13} /></span>
-            <div>
-              <h3 className="font-display text-sm font-extrabold">{isEditing ? 'Modifier le classeur' : 'Nouveau classeur'}</h3>
-              <p className="text-[10px] text-slate-300">Référentiel des classeurs</p>
-            </div>
-          </div>
-          <button onClick={onClose} disabled={loading} className="rounded-lg bg-white/10 p-2 text-slate-200 hover:bg-white/15"><FaTimes size={12} /></button>
-        </div>
+        <ModalHeader
+          title={isEditing ? 'Modifier le classeur' : 'Nouveau classeur'}
+          subtitle="Référentiel des classeurs"
+          eyebrow="DGRAD · Archivage ordinaire"
+          icon={<FaFolder size={15} />}
+          onClose={onClose}
+          closeDisabled={loading}
+        />
 
         <form onSubmit={submit} className="space-y-4 p-6">
           <div>

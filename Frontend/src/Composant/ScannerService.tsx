@@ -28,25 +28,32 @@ class ScannerService {
             
             if (response.ok) {
                 const data = await response.json();
-                this.isConnected = data.ready || false;
-                console.log("✅ Scanner connecté:", data);
+                const scannerDetected = data.scanner === true || data.ready === true;
+                this.isConnected = scannerDetected;
+                console.log("✅ Service scanner joignable:", data);
                 return {
-                    connected: this.isConnected,
-                    message: this.isConnected ? 'Scanner détecté' : 'Scanner non prêt',
+                    connected: scannerDetected,
+                    serviceConnected: true,
+                    scannerDetected,
+                    message: scannerDetected
+                        ? 'Scanner détecté et prêt'
+                        : 'Service scanner démarré, mais aucun scanner détecté par Windows.',
                     data: data
                 };
             }
         } catch (error) {
-            console.log('❌ Scanner non disponible:', error.message);
+            console.log('❌ Service scanner non disponible:', error.message);
             if (error.name === 'AbortError') {
-                console.log('⏱️ Timeout - Le scanner ne répond pas');
+                console.log('⏱️ Timeout - Le service scanner ne répond pas');
             }
         }
         
         this.isConnected = false;
         return {
             connected: false,
-            message: 'Scanner Windows non détecté',
+            serviceConnected: false,
+            scannerDetected: false,
+            message: 'Service scanner Windows non démarré.',
             error: 'CONNECTION_FAILED'
         };
     }
@@ -216,18 +223,49 @@ class ScannerService {
         const result = await this.checkConnection();
         
         if (!result.connected) {
+            if (result.serviceConnected && !result.scannerDetected) {
+                return {
+                    connected: false,
+                    serviceConnected: true,
+                    scannerDetected: false,
+                    title: 'Aucun scanner détecté',
+                    message: 'Le service WindowScan est démarré, mais Windows ne détecte aucun scanner.',
+                    instructions: `
+                        <div style="text-align: left;">
+                            <p style="color: #b45309;"><strong>⚠️ Service WindowScan démarré, aucun scanner détecté.</strong></p>
+                            <p><strong>Vérifiez :</strong></p>
+                            <ol style="margin-left: 20px;">
+                                <li>Le scanner est branché en USB et allumé.</li>
+                                <li>Le scanner apparaît dans <strong>Périphériques et imprimantes</strong> de Windows.</li>
+                                <li>Le pilote WIA / TWAIN est installé.</li>
+                                <li>La fenêtre <strong>WindowScan.exe</strong> affiche un scanner dans ses logs.</li>
+                                <li>Redémarrez WindowScan en tant qu’administrateur si nécessaire.</li>
+                            </ol>
+                            <hr>
+                            <p style="color: #666; font-size: 0.9em;">
+                                <strong>Service :</strong> ${this.baseUrl}<br>
+                                <strong>Dernière vérification :</strong> ${new Date().toLocaleTimeString()}
+                            </p>
+                        </div>
+                    `
+                };
+            }
+
             return {
                 connected: false,
-                title: 'Scanner non disponible',
+                serviceConnected: false,
+                scannerDetected: false,
+                title: 'Service scanner non démarré',
+                message: 'L’application WindowScan n’est pas accessible sur le port 8081.',
                 instructions: `
                     <div style="text-align: left;">
                         <p style="color: #dc3545;"><strong>❌ L'application scanner Windows n'est pas détectée.</strong></p>
                         <p><strong>Pour utiliser le scanner :</strong></p>
                         <ol style="margin-left: 20px;">
-                            <li>Lancez l'application <strong>WindowScan.exe</strong> (elle doit être en cours d'exécution)</li>
-                            <li>Vérifiez qu'elle écoute bien sur le port <strong>8081</strong></li>
-                            <li>Regardez la fenêtre de logs du scanner pour voir les erreurs éventuelles</li>
-                            <li>Vérifiez que votre pare-feu n bloque pas la connexion</li>
+                            <li>Lancez l'application <strong>WindowScan.exe</strong>.</li>
+                            <li>Vérifiez qu'elle écoute bien sur le port <strong>8081</strong>.</li>
+                            <li>Regardez la fenêtre de logs du scanner pour voir les erreurs éventuelles.</li>
+                            <li>Vérifiez que votre pare-feu ne bloque pas la connexion.</li>
                         </ol>
                         <hr>
                         <p style="color: #666; font-size: 0.9em;">

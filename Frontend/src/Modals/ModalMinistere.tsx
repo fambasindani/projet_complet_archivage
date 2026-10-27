@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
 import GetTokenOrRedirect from '../Composant/getTokenOrRedirect';
+import ModalHeader from '../Composant/ModalHeader';
 import { FaPlus, FaEdit, FaTimes, FaFileInvoice, FaHashtag } from 'react-icons/fa';
 
 const ModalMinistere = ({ isOpen, onClose, articleToEdit = null, onSuccess }) => {
@@ -108,15 +109,13 @@ const ModalMinistere = ({ isOpen, onClose, articleToEdit = null, onSuccess }) =>
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={handleCancel} />
       <div className="relative w-full max-w-md mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden">
-        <div className="bg-indigo-600 px-6 py-4 flex items-center justify-between">
-          <h3 className="text-lg font-bold text-white flex items-center gap-2">
-            <FaFileInvoice />
-            {isEditing ? "Modifier le Service" : "Nouveau Service d'Assiette"}
-          </h3>
-          <button onClick={handleCancel} className="text-white/80 hover:text-white transition">
-            <FaTimes size={18} />
-          </button>
-        </div>
+        <ModalHeader
+          title={isEditing ? 'Modifier le service' : "Nouveau service d'assiette"}
+          subtitle="Article budgétaire et service associé"
+          eyebrow="DGRAD · Titres de perception"
+          icon={<FaFileInvoice size={15} />}
+          onClose={handleCancel}
+        />
 
         <form onSubmit={handleSubmit} className="p-6">
           <div className="mb-5">

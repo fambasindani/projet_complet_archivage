@@ -2,6 +2,7 @@
 // src/Composant/OCRTextModal.js
 import React from 'react';
 import { FaTimes, FaFileAlt, FaCopy, FaDownload, FaPrint } from 'react-icons/fa';
+import ModalHeader from '../Composant/ModalHeader';
 
 const OCRTextModal = ({ isOpen, onClose, textData }) => {
     if (!isOpen || !textData) return null;
@@ -54,25 +55,13 @@ const OCRTextModal = ({ isOpen, onClose, textData }) => {
                 <div className="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
                     <div className="modal-content border border-slate-200-0 shadow-lg" style={{ maxHeight: '90vh' }}>
                         
-                        {/* En-tête */}
-                        <div className="modal-header bg-indigo-600 text-white sticky-top">
-                            <div className="flex items-center">
-                                <FaFileAlt className="mr-2" style={{ fontSize: '1.5rem' }} />
-                                <div>
-                                    <h5 className="modal-title mb-0">Texte extrait par OCR</h5>
-                                    <small className="block">
-                                        {textData.nom} • {textData.pages || 1} page(s)
-                                    </small>
-                                </div>
-                            </div>
-                            <button 
-                                type="button" 
-                                className="close text-white" 
-                                onClick={onClose}
-                            >
-                                <span>&times;</span>
-                            </button>
-                        </div>
+                        <ModalHeader
+                            title="Texte extrait par OCR"
+                            subtitle={`${textData.nom} · ${textData.pages || 1} page(s)`}
+                            eyebrow="DGRAD · Recherche OCR"
+                            icon={<FaFileAlt size={15} />}
+                            onClose={onClose}
+                        />
 
                         {/* Corps */}
                         <div className="modal-body">

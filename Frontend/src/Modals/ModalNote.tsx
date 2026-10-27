@@ -16,6 +16,7 @@ import {
   FaCheckCircle,
 } from "react-icons/fa";
 import ConfirmModal from "./ConfirmModal";
+import ModalHeader from "../Composant/ModalHeader";
 
 const ModalNote = ({ modalId, isOpen, onClose, monid, projet, idclasseur, idcentre, verification }) => {
   const [fichiers, setFichiers] = useState([]);
@@ -160,30 +161,13 @@ const ModalNote = ({ modalId, isOpen, onClose, monid, projet, idclasseur, idcent
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={handleClose} />
       <div className="relative w-full max-w-3xl bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden animate-scaleIn max-h-[90vh] flex flex-col">
-        {/* Header gradient */}
-        <div className="px-6 py-5 bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur border border-white/20 flex items-center justify-center">
-              <FaFilePdf className="text-white" size={16} />
-            </div>
-            <div>
-              <h3 className="font-bold text-white leading-none flex items-center gap-2">
-                Documents
-                {projet && <span className="font-normal text-white/90">— {projet}</span>}
-              </h3>
-              <p className="text-xs text-white/80 mt-1">
-                {documents.length} document{documents.length !== 1 ? "s" : ""} • PDF uniquement
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={handleClose}
-            className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition"
-            aria-label="Fermer"
-          >
-            <FaTimes size={14} />
-          </button>
-        </div>
+        <ModalHeader
+          title={projet ? `Documents — ${projet}` : 'Documents'}
+          subtitle={`${documents.length} document${documents.length !== 1 ? 's' : ''} · PDF uniquement`}
+          eyebrow="DGRAD · Pièces justificatives"
+          icon={<FaFilePdf size={15} />}
+          onClose={handleClose}
+        />
 
         {/* Body */}
         <div className="p-6 overflow-y-auto flex-1 space-y-6">

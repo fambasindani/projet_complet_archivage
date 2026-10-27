@@ -71,3 +71,37 @@ code {
 .spin {
   animation: spin 1s linear infinite;
 }
+
+/* Validation des champs requis */
+.field-invalid {
+  border-color: #e11d48 !important;
+  background-color: #fff1f2 !important;
+  box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.08) !important;
+}
+
+.field-invalid:focus {
+  border-color: #be123c !important;
+  box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.14) !important;
+}
+
+.field-error-message {
+  margin-top: 4px;
+  color: #e11d48;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.field-error-message::before {
+  content: "!";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  margin-right: 4px;
+  border-radius: 999px;
+  background: #ffe4e6;
+  font-size: 9px;
+  font-weight: 800;
+}

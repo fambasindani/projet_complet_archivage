@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
 import GetTokenOrRedirect from '../Composant/getTokenOrRedirect';
+import ModalHeader from '../Composant/ModalHeader';
 import { FaEdit, FaMapMarkerAlt, FaPlus, FaSpinner, FaTimes } from 'react-icons/fa';
 import { toast } from '../Composant/Toast';
 
@@ -92,22 +93,14 @@ const ModalEmplacementScreen = ({ isOpen, onClose, emplacementToEdit = null, onS
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-navy-950/55 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200">
-        <div className="flex items-center justify-between bg-navy-900 px-6 py-4 text-white">
-          <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10">
-              <FaMapMarkerAlt size={13} />
-            </span>
-            <div>
-              <h3 className="font-display text-sm font-extrabold">
-                {isEditing ? "Modifier l'emplacement" : 'Nouvel emplacement'}
-              </h3>
-              <p className="text-[10px] text-slate-300">Localisation physique des archives</p>
-            </div>
-          </div>
-          <button onClick={onClose} disabled={loading} className="rounded-lg bg-white/10 p-2 text-slate-200 hover:bg-white/15">
-            <FaTimes size={12} />
-          </button>
-        </div>
+        <ModalHeader
+          title={isEditing ? "Modifier l'emplacement" : 'Nouvel emplacement'}
+          subtitle="Localisation physique des archives"
+          eyebrow="DGRAD · Archivage ordinaire"
+          icon={<FaMapMarkerAlt size={15} />}
+          onClose={onClose}
+          closeDisabled={loading}
+        />
 
         <form onSubmit={submit} className="space-y-4 p-6">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

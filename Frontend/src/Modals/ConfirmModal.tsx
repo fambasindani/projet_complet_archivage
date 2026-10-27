@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React from "react";
 import { FaExclamationTriangle, FaTrash, FaTimes, FaSpinner } from "react-icons/fa";
+import ModalHeader from "../Composant/ModalHeader";
 
 const ConfirmModal = ({ isOpen, onClose, onConfirm, title = "Confirmer", message, confirmText = "Confirmer", cancelText = "Annuler", variant = "danger", loading = false }) => {
   if (!isOpen) return null;
@@ -9,12 +10,16 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title = "Confirmer", message
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden animate-scaleIn">
-        <div className="p-6 text-center">
-          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 ${isDanger ? "bg-red-50 border border-red-100 text-red-600" : "bg-amber-50 border border-amber-100 text-amber-600"}`}>
-            <FaExclamationTriangle size={20} />
-          </div>
-          <h3 className="text-lg font-bold text-slate-900">{title}</h3>
-          <p className="text-sm text-slate-600 mt-2 leading-relaxed">{message}</p>
+        <ModalHeader
+          title={title}
+          subtitle={isDanger ? 'Action irréversible' : 'Confirmation requise'}
+          eyebrow="DGRAD · Action sensible"
+          icon={<FaExclamationTriangle size={15} />}
+          onClose={onClose}
+          closeDisabled={loading}
+        />
+        <div className="px-6 py-6">
+          <p className="text-sm text-slate-600 leading-relaxed">{message}</p>
         </div>
         <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex gap-3">
           <button onClick={onClose} disabled={loading} className="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-50 transition disabled:opacity-50">

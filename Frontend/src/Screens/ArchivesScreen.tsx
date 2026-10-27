@@ -20,6 +20,7 @@ import Menus from '../Composant/Menus';
 import { toast } from '../Composant/Toast';
 import ConfirmModal from '../Modals/ConfirmModal';
 import FichiersDocumentsModal from '../Modals/FichiersDocumentsModal';
+import ModalHeader from '../Composant/ModalHeader';
 import LoadingSpinner from '../Loading/LoadingSpinner';
 import archiveService from '../services/archive.service';
 import typeDocumentService from '../services/typeDocument.service';
@@ -308,15 +309,16 @@ const ArchivesScreen = () => {
       {detail && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-navy-950/55 backdrop-blur-sm" onClick={() => setDetail(null)} />
-          <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-200">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">{detail.reference}</p>
-                <h3 className="mt-1 font-display text-lg font-extrabold text-navy-900">{detail.titre}</h3>
-              </div>
-              <button onClick={() => setDetail(null)} className="rounded-lg border border-slate-200 p-2 text-slate-500 hover:bg-slate-50"><FaTimes size={11} /></button>
-            </div>
-            <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200">
+            <ModalHeader
+              title={detail.titre || 'Archive'}
+              subtitle={`Archive · ${detail.reference || '—'}`}
+              eyebrow="DGRAD · Archivage ordinaire"
+              icon={<FaArchive size={15} />}
+              onClose={() => setDetail(null)}
+            />
+            <div className="overflow-y-auto p-6">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {[
                 ['Statut', detail.statut],
                 ['Type', detail.type_document?.libelle],
@@ -348,6 +350,7 @@ const ArchivesScreen = () => {
             <button onClick={() => setFilesFor(detail)} className="mt-5 inline-flex items-center gap-2 rounded-xl bg-navy-900 px-4 py-2 text-xs font-bold text-white hover:bg-navy-800">
               <FaFileAlt size={10} /> Gérer les fichiers ({detail.fichiers_count ?? 0})
             </button>
+            </div>
           </div>
         </div>
       )}

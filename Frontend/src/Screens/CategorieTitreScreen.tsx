@@ -8,6 +8,7 @@ import GetTokenOrRedirect from '../Composant/getTokenOrRedirect';
 import { API_BASE_URL } from '../config';
 import { toast } from '../Composant/Toast';
 import ConfirmModal from '../Modals/ConfirmModal';
+import ModalHeader from '../Composant/ModalHeader';
 import LoadingSpinner from '../Loading/LoadingSpinner';
 import {
   FaEdit,
@@ -334,25 +335,17 @@ const CategorieTitreScreen = () => {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-navy-950/55 backdrop-blur-sm" onClick={closeModal} />
-          <div className="relative w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200">
-            <div className="flex items-center justify-between bg-navy-900 px-6 py-4 text-white">
-              <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10">
-                  <FaTags size={13} />
-                </span>
-                <div>
-                  <h3 className="font-display text-sm font-extrabold">
-                    {editing ? 'Modifier la catégorie' : 'Nouvelle catégorie de titre'}
-                  </h3>
-                  <p className="text-[10px] text-slate-300">Référentiel titres_perception</p>
-                </div>
-              </div>
-              <button onClick={closeModal} disabled={submitting} className="rounded-lg bg-white/10 p-2 text-slate-200 hover:bg-white/15">
-                <FaTimes size={12} />
-              </button>
-            </div>
+          <div className="relative flex max-h-[90vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200">
+            <ModalHeader
+              title={editing ? 'Modifier la catégorie' : 'Nouvelle catégorie de titre'}
+              subtitle="Référentiel titres_perception"
+              eyebrow="DGRAD · Titres de perception"
+              icon={<FaTags size={15} />}
+              onClose={closeModal}
+              closeDisabled={submitting}
+            />
 
-            <form onSubmit={submit} className="space-y-4 p-6">
+            <form onSubmit={submit} className="space-y-4 overflow-y-auto p-6">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="mb-1.5 block text-xs font-bold text-slate-600">

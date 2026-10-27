@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import scannerService from "../Composant/ScannerService";
 import ConfirmModal from "./ConfirmModal";
+import ModalHeader from "../Composant/ModalHeader";
 import {
     FaFilePdf, FaTrash, FaTimes, FaPrint, FaCloudUploadAlt,
     FaEye, FaSpinner, FaHistory, FaDownload, FaStopCircle
@@ -182,20 +183,13 @@ const FileUploadModal = ({ documentId, onClose, token, id_classeur, nom_fichier,
             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
             <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl max-h-[90vh] flex flex-col animate-modalIn">
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between shrink-0">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
-                            <FaFilePdf className="text-indigo-600" size={18} />
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-slate-900">Gestion des fichiers</h3>
-                            <p className="text-xs text-slate-500">{uploadedFiles.length} fichier(s) attaché(s)</p>
-                        </div>
-                    </div>
-                    <button onClick={onClose} className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition">
-                        <FaTimes size={16} />
-                    </button>
-                </div>
+                <ModalHeader
+                    title="Gestion des fichiers"
+                    subtitle={`${uploadedFiles.length} fichier(s) attaché(s)`}
+                    eyebrow="DGRAD · Pièces justificatives"
+                    icon={<FaFilePdf size={15} />}
+                    onClose={onClose}
+                />
 
                 {/* Body */}
                 <div className="px-6 py-5 overflow-y-auto flex-1 space-y-5">

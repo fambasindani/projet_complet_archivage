@@ -27,6 +27,7 @@ import {
   FaHashtag,
   FaLayerGroup,
 } from "react-icons/fa";
+import ModalHeader from "../Composant/ModalHeader";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "../Composant/Toast";
@@ -262,34 +263,15 @@ const AdvancedSearchNoteModal = ({ isOpen, onClose, token }) => {
       <div className="absolute inset-0" onClick={onClose} aria-hidden="true" />
 
       <div className="relative bg-white rounded-[24px] shadow-2xl border border-slate-200 max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="bg-gradient-to-br from-indigo-600 via-indigo-600 to-violet-600 px-6 py-5 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur border border-white/20 flex items-center justify-center shrink-0">
-              <FaFileInvoice className="text-white" size={18} />
-            </div>
-            <div>
-              <h3 className="text-[17px] font-bold tracking-tight text-white leading-none flex items-center gap-2">
-                Recherche avancée - Notes de Perception
-                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/15 text-white border border-white/20">
-                  NP • OCR
-                </span>
-              </h3>
-              <p className="text-xs font-medium text-indigo-50 mt-1">
-                Recherchez par n° série, article, assujetti ou dans le texte OCR
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="w-9 h-9 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 flex items-center justify-center text-white transition"
-            aria-label="Fermer"
-          >
-            <FaTimes size={14} />
-          </button>
-        </div>
+                <ModalHeader
+          title="Recherche avancée — Notes de perception"
+          subtitle="Recherche par numéro, article, assujetti ou texte OCR"
+          eyebrow="DGRAD · Recherche documentaire"
+          icon={<FaFileInvoice size={15} />}
+          onClose={onClose}
+        />
 
-        {/* Body */}
+{/* Body */}
         <div className="overflow-y-auto p-6 space-y-6">
           {/* Info générale */}
           <div className="bg-indigo-50/80 rounded-2xl border border-indigo-100 p-4 flex items-start gap-3">

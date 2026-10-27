@@ -17,6 +17,7 @@ import {
   FaInfoCircle,
 } from "react-icons/fa";
 import ConfirmModal from "./ConfirmModal";
+import ModalHeader from "../Composant/ModalHeader";
 import { toast } from "../Composant/Toast";
 
 
@@ -184,35 +185,13 @@ const DocumentModal = ({ modalId, isOpen, onClose, monid, projet, idclasseur, ve
       <div className="absolute inset-0" onClick={onClose} aria-hidden="true" />
 
       <div className="relative bg-white rounded-[24px] shadow-2xl border border-slate-200 max-w-5xl w-full max-h-[90vh] flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-br from-indigo-600 via-violet-600 to-indigo-700 px-6 py-5 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-4 min-w-0">
-            <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur border border-white/20 flex items-center justify-center shrink-0">
-              <FaFilePdf className="text-white" size={18} />
-            </div>
-            <div className="min-w-0">
-              <h3 className="text-[17px] font-bold tracking-tight text-white leading-none flex items-center gap-2">
-                <span className="truncate">Documents</span>
-                {projet && (
-                  <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-white/15 text-white border border-white/20 truncate max-w-[260px]">
-                    <FaFolderOpen size={10} className="mr-1.5 opacity-80" />
-                    <span className="truncate">{projet}</span>
-                  </span>
-                )}
-              </h3>
-              <p className="text-xs font-medium text-indigo-100 mt-1 truncate">
-                Déclaration #{monid} • {documents.length} document{documents.length !== 1 ? "s" : ""}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="w-9 h-9 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 flex items-center justify-center text-white transition shrink-0 ml-3"
-            aria-label="Fermer"
-          >
-            <FaTimes size={14} />
-          </button>
-        </div>
+        <ModalHeader
+          title={projet ? `Documents — ${projet}` : 'Documents'}
+          subtitle={`Déclaration #${monid} · ${documents.length} document${documents.length !== 1 ? 's' : ''}`}
+          eyebrow="DGRAD · Pièces justificatives"
+          icon={<FaFilePdf size={15} />}
+          onClose={onClose}
+        />
 
         {/* Body */}
         <div className="overflow-y-auto p-6 space-y-6">

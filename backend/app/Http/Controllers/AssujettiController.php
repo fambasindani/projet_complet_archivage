@@ -47,7 +47,7 @@ class AssujettiController extends Controller
 
         Assujetti::create($request->all());
 
-        return response()->json(['message' => 'Assujetti ajoutÃ© avec succÃ¨s']);
+        return response()->json(['message' => 'Assujetti ajouté avec succès']);
     }
 
     public function editassujetti($id)
@@ -73,7 +73,7 @@ class AssujettiController extends Controller
 
         $assujetti->update($request->all());
 
-        return response()->json(['message' => 'Assujetti mis Ã  jour avec succÃ¨s']);
+        return response()->json(['message' => 'Assujetti mis à jour avec succès']);
     }
 
     public function supprimerassujetti($id)
@@ -81,7 +81,7 @@ class AssujettiController extends Controller
         $assujetti = Assujetti::findOrFail($id);
         $assujetti->update(['statut' => 0]);
 
-        return response()->json(['message' => 'Assujetti dÃ©sactivÃ©']);
+        return response()->json(['message' => 'Assujetti désactivé']);
     }
 
 

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
 import GetTokenOrRedirect from '../Composant/getTokenOrRedirect';
+import ModalHeader from '../Composant/ModalHeader';
 import { FaBuilding, FaEdit, FaPlus, FaSpinner, FaTimes } from 'react-icons/fa';
 
 const EMPTY = { nom: '', code: '', sigle: '', description: '', statut: '1' };
@@ -76,22 +77,14 @@ const ModalDirectionScreen = ({ isOpen, onClose, directionToEdit = null, onSucce
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-navy-950/55 backdrop-blur-sm" onClick={onClose} />
       <div className="relative w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200">
-        <div className="flex items-center justify-between bg-navy-900 px-6 py-4 text-white">
-          <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10">
-              <FaBuilding size={13} />
-            </span>
-            <div>
-              <h3 className="font-display text-sm font-extrabold">
-                {isEditing ? 'Modifier la direction' : 'Nouvelle direction'}
-              </h3>
-              <p className="text-[10px] text-slate-300">Référentiel organisationnel DGRAD</p>
-            </div>
-          </div>
-          <button onClick={onClose} disabled={loading} className="rounded-lg bg-white/10 p-2 text-slate-200 hover:bg-white/15">
-            <FaTimes size={12} />
-          </button>
-        </div>
+        <ModalHeader
+          title={isEditing ? 'Modifier la direction' : 'Nouvelle direction'}
+          subtitle="Référentiel organisationnel DGRAD"
+          eyebrow="DGRAD · Organisation"
+          icon={<FaBuilding size={15} />}
+          onClose={onClose}
+          closeDisabled={loading}
+        />
 
         <form onSubmit={submit} className="space-y-5 p-6">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

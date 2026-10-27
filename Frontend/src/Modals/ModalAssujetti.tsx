@@ -8,6 +8,7 @@ import {
   FaSpinner, FaUser
 } from 'react-icons/fa';
 import { toast } from "../Composant/Toast";
+import ModalHeader from "../Composant/ModalHeader";
 
 const ModalAssujetti = ({ isOpen, onClose, selectnom }) => {
   const token = localStorage.getItem('token');
@@ -167,22 +168,13 @@ const ModalAssujetti = ({ isOpen, onClose, selectnom }) => {
       {/* Modal */}
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col animate-modalIn">
         {/* Header */}
-        <div className="px-6 py-4 text-white shrink-0" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                <FaBuilding size={18} />
-              </div>
-              <h5 className="text-lg font-bold">Gestion des Assujettis</h5>
-            </div>
-            <button
-              onClick={onClose}
-              className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition"
-            >
-              <FaTimes size={14} />
-            </button>
-          </div>
-        </div>
+        <ModalHeader
+          title="Gestion des assujettis"
+          subtitle="Sélection et création d'un redevable"
+          eyebrow="DGRAD · Titres de perception"
+          icon={<FaBuilding size={15} />}
+          onClose={onClose}
+        />
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-6">

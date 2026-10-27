@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { FaEdit, FaPlus, FaSearch, FaSpinner, FaTimes, FaTrash } from 'react-icons/fa';
 import Head from './Head';
 import Menus from './Menus';
+import ModalHeader from './ModalHeader';
 import ConfirmModal from '../Modals/ConfirmModal';
 import LoadingSpinner from '../Loading/LoadingSpinner';
 import { toast } from './Toast';
@@ -139,7 +140,7 @@ const ReferentielCrud = ({
       <Menus />
       <Head />
       <div className="lg:pl-64">
-        <div className="mx-auto max-w-6xl space-y-5 px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl space-y-5 px-4 py-6 sm:px-6 lg:px-8">
           <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-card">
             <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
               <div className="flex items-center gap-4">
@@ -215,62 +216,71 @@ const ReferentielCrud = ({
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-navy-950/55 backdrop-blur-sm" onClick={() => !submitting && setShowModal(false)} />
-          <div className="relative max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200">
-            <div className="flex items-center justify-between bg-navy-900 px-6 py-4 text-white">
-              <h3 className="font-display text-sm font-extrabold">{editing ? `Modifier le ${labelSingular}` : `Nouveau ${labelSingular}`}</h3>
-              <button onClick={() => !submitting && setShowModal(false)} className="rounded-lg bg-white/10 p-2 text-slate-200 hover:bg-white/15"><FaTimes size={12} /></button>
-            </div>
-            <form onSubmit={submit} className="space-y-4 p-6">
-              {fields.map((field) => (
-                <div key={field.name}>
-                  <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                    {field.label} {field.required && <span className="text-rose-500">*</span>}
-                  </label>
-                  {field.type === 'textarea' ? (
-                    <textarea
-                      value={form[field.name] ?? ''}
-                      onChange={(event) => setForm({ ...form, [field.name]: event.target.value })}
-                      rows={3}
-                      className={inputClass}
-                    />
-                  ) : field.type === 'select' ? (
-                    <select
-                      value={form[field.name] ?? ''}
-                      onChange={(event) => setForm({ ...form, [field.name]: event.target.value })}
-                      className={inputClass}
-                    >
-                      <option value="">Veuillez sélectionner...</option>
-                      {(field.options || []).map((option) => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
-                      ))}
-                    </select>
-                  ) : field.type === 'checkbox' ? (
-                    <label className="inline-flex items-center gap-2 text-sm text-slate-700">
-                      <input
-                        type="checkbox"
-                        checked={!!form[field.name]}
-                        onChange={(event) => setForm({ ...form, [field.name]: event.target.checked })}
+          <div className="relative flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200">
+            <ModalHeader
+              title={editing ? `Modifier le ${labelSingular}` : `Nouveau ${labelSingular}`}
+              subtitle="Référentiel DGRAD"
+              eyebrow="DGRAD · Référentiel"
+              icon={icon}
+              onClose={() => !submitting && setShowModal(false)}
+              closeDisabled={submitting}
+            />
+            <form onSubmit={submit} className="overflow-y-auto p-6">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {fields.map((field) => (
+                  <div key={field.name} className={field.type === 'textarea' ? 'sm:col-span-2' : ''}>
+                    {field.type !== 'checkbox' && (
+                      <label className="mb-1.5 block text-xs font-bold text-slate-600">
+                        {field.label} {field.required && <span className="text-rose-500">*</span>}
+                      </label>
+                    )}
+                    {field.type === 'textarea' ? (
+                      <textarea
+                        value={form[field.name] ?? ''}
+                        onChange={(event) => setForm({ ...form, [field.name]: event.target.value })}
+                        rows={2}
+                        className={`${inputClass} resize-none`}
                       />
-                      {field.label}
-                    </label>
-                  ) : (
-                    <input
-                      type={field.type || 'text'}
-                      value={form[field.name] ?? ''}
-                      onChange={(event) => setForm({ ...form, [field.name]: event.target.value })}
-                      required={field.required}
-                      placeholder={field.placeholder}
-                      className={inputClass}
-                    />
-                  )}
-                  {errors[field.name] && (
-                    <p className="mt-1 text-[10px] font-semibold text-rose-600">
-                      {Array.isArray(errors[field.name]) ? errors[field.name][0] : errors[field.name]}
-                    </p>
-                  )}
-                </div>
-              ))}
-              <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+                    ) : field.type === 'select' ? (
+                      <select
+                        value={form[field.name] ?? ''}
+                        onChange={(event) => setForm({ ...form, [field.name]: event.target.value })}
+                        className={inputClass}
+                      >
+                        <option value="">Veuillez sélectionner...</option>
+                        {(field.options || []).map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </select>
+                    ) : field.type === 'checkbox' ? (
+                      <label className="flex h-full items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/60 px-3.5 py-3 text-sm text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={!!form[field.name]}
+                          onChange={(event) => setForm({ ...form, [field.name]: event.target.checked })}
+                          className="h-4 w-4 rounded border-slate-300 text-navy-900 focus:ring-navy-200"
+                        />
+                        <span className="font-semibold">{field.label}</span>
+                      </label>
+                    ) : (
+                      <input
+                        type={field.type || 'text'}
+                        value={form[field.name] ?? ''}
+                        onChange={(event) => setForm({ ...form, [field.name]: event.target.value })}
+                        required={field.required}
+                        placeholder={field.placeholder}
+                        className={inputClass}
+                      />
+                    )}
+                    {errors[field.name] && (
+                      <p className="mt-1 text-[10px] font-semibold text-rose-600">
+                        {Array.isArray(errors[field.name]) ? errors[field.name][0] : errors[field.name]}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="mt-5 flex justify-end gap-2 border-t border-slate-100 pt-4">
                 <button type="button" onClick={() => setShowModal(false)} disabled={submitting} className="rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">Annuler</button>
                 <button type="submit" disabled={submitting} className="inline-flex items-center gap-2 rounded-xl bg-navy-900 px-6 py-2.5 text-sm font-bold text-white hover:bg-navy-800 disabled:opacity-50">
                   {submitting ? <FaSpinner className="animate-spin" size={11} /> : <FaPlus size={11} />}

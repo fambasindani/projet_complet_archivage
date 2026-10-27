@@ -14,6 +14,7 @@ import {
 } from 'react-icons/fa';
 import fichierService from '../services/fichier.service';
 import scannerService from '../Composant/ScannerService';
+import ModalHeader from '../Composant/ModalHeader';
 import { API_BASE_URL } from '../config';
 import { toast } from '../Composant/Toast';
 
@@ -176,35 +177,15 @@ const PostSaveFilesModal = ({
       <div className="absolute inset-0 bg-navy-950/65 backdrop-blur-sm" />
 
       <div className="relative flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-slate-200">
-        <header className="shrink-0 border-b border-slate-200 bg-[#fcfbf7]">
-          <div className="flex h-1">
-            <span className="w-24 bg-navy-900" />
-            <span className="w-10 bg-gold-400" />
-            <span className="flex-1 bg-slate-200" />
-          </div>
-          <div className="flex items-center justify-between gap-4 px-6 py-4">
-            <div className="flex min-w-0 items-center gap-4">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-navy-900 text-white shadow-sm">
-                <FaFilePdf size={15} />
-              </span>
-              <div className="min-w-0">
-                <p className="font-mono text-[9px] font-bold uppercase tracking-[0.22em] text-gold-600">
-                  DGRAD · Pièces justificatives
-                </p>
-                <h3 className="mt-0.5 font-serif text-xl font-semibold text-navy-900">
-                  Dossier enregistré
-                </h3>
-                <p className="mt-0.5 text-[10px] font-medium text-slate-400">
-                  {reference || `Dossier #${entiteId}`}
-                </p>
-              </div>
-            </div>
-            <button onClick={finish} className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition hover:bg-slate-50 hover:text-slate-700">
-              <FaTimes size={13} />
-            </button>
-          </div>
+        <ModalHeader
+          title="Dossier enregistré"
+          subtitle={reference || `Dossier #${entiteId}`}
+          eyebrow="DGRAD · Pièces justificatives"
+          icon={<FaFilePdf size={15} />}
+          onClose={finish}
+        />
 
-          <div className="flex items-center gap-2 border-t border-slate-100 px-6 py-2.5">
+        <div className="flex shrink-0 items-center gap-2 border-b border-slate-200 bg-white px-6 py-2.5">
             {[
               { label: 'Enregistré', done: true },
               { label: 'Pièces jointes', done: files.length > 0 },
@@ -220,8 +201,7 @@ const PostSaveFilesModal = ({
                 {index < 2 && <span className="mx-1 h-px w-5 bg-slate-200" />}
               </div>
             ))}
-          </div>
-        </header>
+        </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-5">
           <p className="text-xs leading-5 text-slate-500">

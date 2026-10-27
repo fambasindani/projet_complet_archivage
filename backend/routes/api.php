@@ -30,6 +30,7 @@ use App\Http\Controllers\TypeDocumentController;
 use App\Http\Controllers\CategorieTitreController;
 use App\Http\Controllers\MotCleController;
 use App\Http\Controllers\OcrSearchController;
+use App\Http\Controllers\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -62,6 +63,9 @@ Route::post('/logout', [MonUtilisateurController::class, 'logout'])->middleware(
 
 // ============ PROTÉGÉ (auth:sanctum) ============
 Route::middleware(['auth:sanctum'])->group(function () {
+
+    // --- Notifications ---
+    Route::get('/notifications', [NotificationController::class, 'index']);
 
     // --- Dashboards Notes ---
     Route::prefix('dashboards/notes')->middleware('permission:titres.view')->group(function () {

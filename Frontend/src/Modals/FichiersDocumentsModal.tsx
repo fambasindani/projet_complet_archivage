@@ -18,6 +18,7 @@ import {
 } from 'react-icons/fa';
 import fichierService from '../services/fichier.service';
 import scannerService from '../Composant/ScannerService';
+import ModalHeader from '../Composant/ModalHeader';
 import { API_BASE_URL } from '../config';
 import ConfirmModal from './ConfirmModal';
 import { toast } from '../Composant/Toast';
@@ -270,32 +271,13 @@ const FichiersDocumentsModal = ({ isOpen, onClose, entiteType, entiteId, onChang
       <div className="absolute inset-0 bg-navy-950/65 backdrop-blur-sm" onClick={onClose} />
 
       <div className="relative flex max-h-[94vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-slate-200">
-        <header className="shrink-0 border-b border-slate-200 bg-[#fcfbf7]">
-          <div className="flex h-1">
-            <span className="w-24 bg-navy-900" />
-            <span className="w-10 bg-gold-400" />
-            <span className="flex-1 bg-slate-200" />
-          </div>
-          <div className="flex items-center justify-between gap-4 px-6 py-4">
-            <div className="flex min-w-0 items-center gap-4">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-navy-900 text-white shadow-sm">
-                <FaFileAlt size={16} />
-              </span>
-              <div className="min-w-0">
-                <p className="font-mono text-[9px] font-bold uppercase tracking-[0.22em] text-gold-600">
-                  DGRAD · Pièces justificatives
-                </p>
-                <h3 className="mt-0.5 font-serif text-xl font-semibold text-navy-900">
-                  Fichiers & OCR
-                </h3>
-                <p className="mt-0.5 text-[10px] font-medium text-slate-400">
-                  {entiteType === 'archive' ? 'Archive' : 'Titre de perception'} #{entiteId}
-                  <span className="mx-2 text-slate-300">·</span>
-                  {files.length} document(s)
-                </p>
-              </div>
-            </div>
-
+        <ModalHeader
+          title="Fichiers & OCR"
+          subtitle={`${entiteType === 'archive' ? 'Archive' : 'Titre de perception'} #${entiteId} · ${files.length} document(s)`}
+          eyebrow="DGRAD · Pièces justificatives"
+          icon={<FaFileAlt size={15} />}
+          onClose={onClose}
+          right={
             <div className="hidden items-center gap-2 md:flex">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[10px] font-bold text-emerald-700">
                 <FaCheckCircle size={9} /> {counts.done} traité(s)
@@ -304,15 +286,8 @@ const FichiersDocumentsModal = ({ isOpen, onClose, entiteType, entiteId, onChang
                 <FaClock size={9} /> {counts.pending} en attente
               </span>
             </div>
-
-            <button
-              onClick={onClose}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition hover:bg-slate-50 hover:text-slate-700"
-            >
-              <FaTimes size={13} />
-            </button>
-          </div>
-        </header>
+          }
+        />
 
         <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[390px_minmax(0,1fr)]">
           <aside className="flex min-h-0 flex-col border-b border-slate-200 bg-slate-50/50 lg:border-b-0 lg:border-r">
